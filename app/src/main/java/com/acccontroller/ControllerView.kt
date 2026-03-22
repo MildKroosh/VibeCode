@@ -2,6 +2,7 @@ package com.acccontroller
 
 import android.content.Context
 import android.graphics.*
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.abs
@@ -9,6 +10,19 @@ import kotlin.math.min
 import kotlin.math.max
 
 class ControllerView(context: Context) : View(context) {
+
+    init {
+        Log.d(TAG, "ControllerView: init start")
+        try {
+            // Force-reference a few paints so any parseColor crash is caught here with context
+            val _ = bgPaint.color
+            Log.d(TAG, "ControllerView: paints initialized OK")
+        } catch (e: Exception) {
+            Log.e(TAG, "ControllerView: CRASH during paint init — ${e.javaClass.simpleName}: ${e.message}", e)
+            throw e
+        }
+        Log.d(TAG, "ControllerView: init complete")
+    }
 
     var onThrottleChanged: ((Float) -> Unit)? = null
     var onBrakeChanged: ((Float) -> Unit)? = null
@@ -104,6 +118,7 @@ class ControllerView(context: Context) : View(context) {
     private var throttleGradient: LinearGradient? = null
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        Log.d(TAG, "onSizeChanged: ${w}x${h}")
         super.onSizeChanged(w, h, oldw, oldh)
         val padding = 24f
         val zoneW = w * 0.22f
@@ -134,7 +149,9 @@ class ControllerView(context: Context) : View(context) {
         )
     }
 
+    private var firstDraw = true
     override fun onDraw(canvas: Canvas) {
+        if (firstDraw) { Log.d(TAG, "onDraw: first frame"); firstDraw = false }
         val w = width.toFloat()
         val h = height.toFloat()
         canvas.drawRect(0f, 0f, w, h, bgPaint)
@@ -334,6 +351,8 @@ class ControllerView(context: Context) : View(context) {
     data class PedalTracker(val zone: PedalZone, val startY: Float, val startValue: Float)
 
     private companion object {
+        const val TAG = "AccController/View"
+
         // Background & grid
         const val COLOR_BG          = "#0A0C10"
         const val COLOR_GRID        = "#0D1520"
